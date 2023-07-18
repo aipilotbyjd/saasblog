@@ -2,6 +2,7 @@
 
     <div class="flex justify-center mt-4">
         <form action="{{ route('auth.github') }}" method="post">
+            @csrf
             <x-primary-button>
                 {{ __('Login with GitHub') }}
             </x-primary-button>
