@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,14 +32,24 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/auth/redirect', function () {
     return Socialite::driver('github')->redirect();
 })->name('auth.github');
- 
+
 Route::get('/auth/callback', function () {
-    $user = Socialite::driver('github')->user();
- 
-    dd($user);
+    $githubUser = Socialite::driver('github')->user();
+    $githubUser = User::firstOrCreate([
+        'email' => $githubUser->email,
+    ], [
+        'github_id' => $githubUser->id,
+        'name' => $githubUser->name ?? ($githubUser->email ? Str::before($githubUser->email, '@') : 'Guest'),
+        'password' => 'password',
+        'github_token' => $githubUser->token,
+        'github_refresh_token' => $githubUser->refreshToken,
+    ]);
+
+    Auth::login($githubUser);
+    return redirect('/dashboard');
 });
